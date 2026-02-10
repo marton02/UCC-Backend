@@ -17,7 +17,7 @@ class EventController extends Controller
     {
         $this->authorize('viewAny', Event::class);
 
-        return EventResource::collection(Event::all());
+        return EventResource::collection(Event::where("user_id", Auth::id())->get());
     }
 
     public function store(EventRequest $request)
