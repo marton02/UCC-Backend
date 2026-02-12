@@ -1,22 +1,34 @@
 <?php
 
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\HelpdeskController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return new \App\Http\Resources\UserResource($request->user());
-})->middleware('auth:api');
+Route::group([
+    'middleware' => 'auth:api',
+], function () {
 
-Route::apiResource("events",EventController::class)->middleware('auth:api');
+    Route::get('/user', function (Request $request) {
+        return new \App\Http\Resources\UserResource($request->user());
+    });
 
-Route::patch("/events/{event}/restore",EventController::class."@restore")->middleware('auth:api')->withTrashed();
-Route::delete("/events/{event}/force",EventController::class."@forceDestroy")->middleware('auth:api')->withTrashed();
+    Route::apiResource("events",EventController::class);
 
-Route::get("/logout",function (){
-    $token = Auth::user()->token();
-    $token->revoke();
-    return response()->json([],201);
-})->middleware('auth:api');
+    Route::patch("/events/{event}/restore",EventController::class."@restore")->withTrashed();
+    Route::delete("/events/{event}/force",EventController::class."@forceDestroy")->withTrashed();
+
+    Route::get("/logout",function (){
+        $token = Auth::user()->token();
+        $token->revoke();
+        return response()->json([],201);
+    });
+
+    Route::get("helpdesk",HelpdeskController::class."@index");
+});
 
 Route::post("forgot-password",function (Request $request){
     $request->validate(['email'=>'required|email']);
