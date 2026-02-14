@@ -17,7 +17,7 @@ class HelpdeskMessage extends Model
 
     public function helpdeskTicket()
     {
-        return $this->belongsTo(HelpdeskTicket::class);
+        return $this->belongsTo(HelpdeskTicket::class, 'helpdesk_ticket_id');
     }
 
     public function user()

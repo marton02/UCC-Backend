@@ -28,6 +28,6 @@ class HelpdeskTicket extends Model
 
     public function messages()
     {
-        return $this->hasMany(HelpdeskMessage::class);
+        return $this->hasMany(HelpdeskMessage::class,"helpdesk_ticket_id");
     }
 }

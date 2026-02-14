@@ -28,6 +28,8 @@ Route::group([
     });
 
     Route::get("helpdesk",HelpdeskController::class."@index");
+    Route::post("helpdesk",HelpdeskController::class."@createTicket");
+    Route::post("helpdesk/{ticket}/message",HelpdeskController::class."@postMessage");
 });
 
 Route::post("forgot-password",function (Request $request){

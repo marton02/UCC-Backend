@@ -15,7 +15,7 @@ class HelpdeskMessageResource extends JsonResource
             'id' => $this->id,
             'content' => $this->content,
             'created_at' => $this->created_at,
-            'user' => new UserResource($this->whenLoaded('user')),
+            'sender' => new UserResource($this->whenLoaded('user')),
         ];
     }
 }
