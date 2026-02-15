@@ -1,59 +1,100 @@
-<p style="text-align: center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# UCC Events - Backend
 
-<p style="text-align: center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Állásinterjúhoz tartozó projektfeladat backendjének repository-ja.
 
-## About Laravel
+[![Made by Molnár Márton](https://img.shields.io/badge/Made%20by-Molnár%20Márton-orange)](https://cybrcrime.hu)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Előfeltételek
+A backend futtatásához szükség van egy Meilisearch deploymentre. Fejlesztői környezetben ehhez a legegyszerűbb mód egy Docker konténer elindítása az alábbi módon
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```shell
+docker pull getmeili/meilisearch:latest
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+docker run -it --rm \
+    -p 7700:7700 \
+    -e MEILI_ENV='development' \
+    getmeili/meilisearch:latest
+```
 
-## Learning Laravel
+## Projekt elindítása saját gépen
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- Clone-ozd le a repot a saját gépedre
+- Készíts egy másolatot a .env.example állományról .env néven `cp .env.example .env`
+- Telepítsd a szükséges dependenciákat `composer install`
+- Hozz létre egy alkalazás szintű titkosító kulcsot `php artisan key:generate`
+- Aállítsd be a .env állományt az alábbiak szerint (az itt nem említett változók változatlanul maradhatnak)
+```dotenv
+BROADCAST_CONNECTION="reverb" # Ahhoz, hogy a backend által küldött események megérkezzenek a frontendre, a BROADCAST_CONNECTION változó értékének a reverb-et kell megadni
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# Abban az esetben, ha van SMTP szervered, akkor az alábbi változók beállításával megadhatod, hogy a kimenő emailek azon keresztül kerüljenek kiküldésre. Alapértelmezetten a levelek a storagr/logs/laravel.log file-ba kerülnek kiíratásra
+MAIL_MAILER=log
+MAIL_SCHEME=null
+MAIL_HOST=127.0.0.1
+MAIL_PORT=2525
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
 
-## Laravel Sponsors
+#Reverb beállítások
+REVERB_SERVER="reverb" # Laravel Reverb szerver típusa
+REVERB_SERVER_HOST="0.0.0.0" # Az az IP cím, amin keresztül a Reverb szerver figyeljen, 0.0.0.0 esetén a szerver összes IP címén keresztül figyel a forgalomra
+REVERB_SERVER_PORT="8080" # A Reverb szerver portja
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Az alábbi beállítások a backend Reverb szerverhez való csatlakkozásához szükségesek
+REVERB_HOST="localhost"
+REVERB_SCHEME="http"
+REVERB_PORT="8080"
 
-### Premium Partners
+# Az alábbi környekezi változókban beállított értéket kell az alkalmazás frontendjének megadni, hogy csatlakozni tudjon a Reverb szolgáltatáshoz
+REVERB_APP_KEY="frontend"
+REVERB_APP_SECRET="frontend"
+REVERB_APP_ID="frontend"
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+FRONTEND_PASSWORD_RESET_URL="http://localhost/login/reset-password" # A Frontend azon címe, ami kiküldésre kerül a jelszóhelyreállító emailekben
 
-## Contributing
+# Laravel Scout beállítások
+SCOUT_DRIVER=meilisearch
+MEILISEARCH_HOST=http://localhost:7700
+MEILISEARCH_KEY=
+```
+- Adatbázis létrehozása, migrációk futtatása és kezdeti adatok betöltése
+```shell
+php artisan migrate --seed
+```
+> Abban az esetben, ha a fenti parancs megkérdezi, hogy az adatbázis még nem létezik, létre kívánod-e hozni, akkor válaszd az igen (yes/y) lehetőséget.
+- Passport titkosító kulcsok létrehozása
+```shell
+php artisan passport:keys
+```
+- Passport kliens létrehozása
+```shell
+php artisan passport:client --password --name frontend
+```
+> A megjelenő kliens id-t és secret-et kell megadni a frontend alkalmazásnak. **Fontos**, hogy ezeket az adatokat a backend többet nem jeleníti meg.
+- Meilisearch adatok betöltése
+```shell
+php artisan scout:sysnc-index-settings && php artisan scout:import "App\Models\Faq"
+```
+- Első user létrehozása
+```shell
+php artisan user:create
+```
+> A parancs kiadása után meg kell adni az új felhasználó adatait: név, email cím és jelszó. **Fontos**, hogy a jelszót a rendszer nem írja ki a konzolra, így azt jól jegyezd meg.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Reverb indítása
+```shell
+php artisan reverb:start
+```
+> A Reverb szolgáltatásnak folyamatosan működőképesnek kell lennie, különben a backend működésképtelenségét vonhatja maga után.
 
-## Code of Conduct
+- Queue indítása
+```shell
+php artisan queue:work
+```
+> A Queue szolgáltatásnak folyamatosan működőképesnek kell lennie, különben a backend működésképtelenségét vonhatja maga után.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Backend indítása
+```shell
+php artisan serve
+```
